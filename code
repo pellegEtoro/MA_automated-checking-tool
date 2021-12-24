@@ -1,0 +1,83 @@
+
+
+import selenium
+import time
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.keys import Keys
+from selenium import webdriver
+from time import sleep
+import urllib.request
+from urllib.request import Request, urlopen
+
+global linksNum
+global social_bar
+global URL
+global date
+links_text_list = []
+
+def main_loop():
+
+    social_bar = False
+    while True:
+        linksNum = 0
+        s=Service("G:/My Drive/automatin_checking/chromedriver.exe")
+        driver = webdriver.Chrome(service=s)
+        url = 'https://view.connect.etoro.com/?qs=806f59a59ef031849dbddc4fbfe452cf7eba036ff76ae226a230655b43a3721ee24846f21639443ef4c7cca94c12bd420c1762f52efc796d1defe05b2cb320b85a09c8798c4cf7de7da74a809954b716'
+        driver.get(url)
+        sleep(0.8)
+        driver.find_element_by_tag_name('a').send_keys(Keys.CONTROL + 't')
+        links = driver.find_elements_by_xpath("//a[@href]")
+      
+        print(links_text_list)
+        print("number of links: ", len(links))
+        link_counter = 0
+        num_of_links = len(links)
+        for i in links:
+            link_counter = link_counter + 1
+            if link_counter == 1:
+                continue
+
+            req = Request(i.get_attribute('href'), headers={'User-Agent': 'chrome'})
+
+            if "eToro Daily Update" in driver.page_source:
+                if social_bar == False:
+                    print("daily test")
+                social_bar = True
+
+
+
+            if num_of_links-link_counter <= 5 and social_bar == True:
+                continue
+
+            try:
+                realLink = urlopen(req).geturl()
+            except urllib.error.HTTPError or urllib.error.URLError:
+                if urllib.error.HTTPError:
+                    print(link_counter, 'after: ', i.get_attribute('href'), 'gave http error')
+                if urllib.error.URLError:
+                    print(link_counter, 'after: ', i.get_attribute('href'), 'gave URL error')
+            except:
+                print("unexpected error on item: ", link_counter)
+
+            if i.get_attribute('target')!="_blank":
+                print(link_counter, 'open on the same page:', realLink)
+
+            if("etoro.com" in realLink and "watchlist" not in realLink):
+                try:
+                    i.send_keys(Keys.CONTROL + Keys.RETURN)
+                except:
+                    print(link_counter, "link not reachable: ", realLink)
+                driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.TAB)
+                linksNum=linksNum+1
+                if "231221" not in realLink:
+                    print(link_counter, "no date in tracking!!: ", realLink)
+        
+        sleep(3)
+        
+        print("finished testing")
+        time.sleep(9999)
+
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    main_loop()
+
